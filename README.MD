@@ -5,7 +5,9 @@ Redux就是一个你能预定义的状态管理器
 > 对于复杂的单页面应用，状态（state）管理非常重要。state 可能包括：服务端的响应数据、本地对响应数据的缓存、本地创建的数据（比如，表单数据）以及一些 UI 的状态信息（比如，路由、选中的 tab、是否显示下拉列表、页码控制等等）。如果 state 变化不可预测，就会难于调试（state 不易重现，很难复现一些 bug）和不易于扩展（比如，优化更新渲染、服务端渲染、路由切换时获取数据等等  
 
 - [Redux Github](https://github.com/reactjs/redux)
+- [Redux 中文](http://cn.redux.js.org/index.html)
 - [segmentfault](https://segmentfault.com/a/1190000003503338?_ea=323420)
+- [阮一峰 Redux](http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_one_basic_usages.html)
 
 Redux 就是用来确保`state`变化的可预测性，主要的约束有：
 * state 以`单一 树形 对象`存储在`store`对象中
@@ -81,6 +83,7 @@ store.dispatch({ type: 'DECREMENT' })
 *Actions describe the fact that something happened, but don't specify how the application's state changes in response. This is the job of a reducer*
 
 * reducer就是你针对触发每一个action时，需进行具体`逻辑处理`的`函数`
+* Reducer 函数最重要的特征是，它是一个纯函数。也就是说，只要是同样的输入，必定得到同样的输出。
 
 > * 一个应用中`有且只有一个store`,也只有一个root reducer
 * root reducer 可包含`多个子reducer`，对应处理具体某一部分state
@@ -91,3 +94,70 @@ store.dispatch({ type: 'DECREMENT' })
 * `store.subscribe(listener)` 来注册 state 变化监听器
 * `createStore(reducer, [initialState])`创建store
 * `store.unsbuscribe(listener)` 取消监听
+
+## Redux异步操纵
+```
+redux中dispatch触发action，在reducer中执行，并返回新的state，这个过程是一个同步的操作，
+那么要实现异步就需要中间件（middleware）
+```
+* 中间件的运用就是在`dispath`的时候封装一层其他操纵
+
+### 中间件的使用
+
+```js
+// 引入applyMiddleware方法
+import { applyMiddleware, createStore } from 'redux';
+// 引入要使用的插件，如：日志
+import createLogger from 'redux-logger';
+const logger = createLogger();
+
+// 创建store时就需要添加中间件的使用，调用applyMiddleware(middleware)
+const store = createStore(
+  reducer,
+  [initialState,]
+  applyMiddleware(logger)
+);
+```
+* 中间件的次序有讲究
+
+```js
+const store = createStore(
+  reducer,
+  applyMiddleware(thunk, promise, logger)
+);
+
+```
+*上面代码中，applyMiddleware方法的三个参数，就是三个中间件。有的中间件有次序要求，使用前要查一下文档。比如，logger就一定要放在最后，否则输出结果会不正确*
+
+#### redux-thunk
+*由于默认的dispatch(action)触发的action只能是一个object对象*
+* redux-thunk 的作用是在`dispatch(action)`时，action可以传递`function`,即`dispatch(function(){})`
+
+#### redux-promise
+* redux-promise 的作用是可以传递`promise`作为dispatch的参数，即：`dispatch(promise)`
+
+## redux & react
+
+* React-Redux连接redux和react的天使
+
+React-Redux 将所有组件分成两大类：UI 组件（presentational component）和容器组件（container component）
+
+* UI组件只负责组件渲染
+ * 只负责UI的呈现，不带有任何业务逻辑
+ * 没有状态（即不使用this.state这个变量）
+ * 所有数据都由参数（this.props）提供
+ * 不使用任何Redux的 API
+
+* 容器组件负责状态管理
+ * 负责管理数据和业务逻辑，不负责UI的呈现
+ * 带有内部状态
+ * 可调用Redux的API
+
+React-Redux 提供`connect`方法，用于从`UI组件`生成`容器组件`
+```
+import { connect } from 'react-redux';
+const VisibleTodoList = connect(mapStateToProps,mapDispatchToProps)(TodoList);
+```
+*TodoList是 UI 组件，VisibleTodoList就是由 React-Redux 通过connect方法自动生成的容器组件*
+* mapStateToProps 用于映射state到UI组件的props
+* mapDispatchToProps 用于指定UI组件触发事件时将进行怎样的dispatch(action)
