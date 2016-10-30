@@ -89,6 +89,8 @@ store.dispatch({ type: 'DECREMENT' })
 * root reducer 可包含`多个子reducer`，对应处理具体某一部分state
 * 当触发action时，会调用`每一个reducer`并返回最终结果
 
+## store
+
 * `store.getState()` 获取当前state
 * `store.dispatch(action)` 来触发 state 更新
 * `store.subscribe(listener)` 来注册 state 变化监听器
