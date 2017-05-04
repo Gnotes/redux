@@ -7,7 +7,8 @@ Redux就是一个你能预定义的状态管理器
 - [Redux Github](https://github.com/reactjs/redux)
 - [Redux 中文](http://cn.redux.js.org/index.html)
 - [segmentfault](https://segmentfault.com/a/1190000003503338?_ea=323420)
-- [阮一峰 Redux](http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_one_basic_usages.html)
+- [阮一峰 Redux](http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_one_basic_usages.html)  
+- [阮一峰 React-Redux](http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_three_react-redux.html)
 
 Redux 就是用来确保`state`变化的可预测性，主要的约束有：
 * state 以`单一 树形 对象`存储在`store`对象中
