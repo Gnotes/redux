@@ -99,10 +99,12 @@ store.dispatch({ type: 'DECREMENT' })
 * `store.unsbuscribe(listener)` 取消监听
 
 ## Redux异步操纵
-```
-redux中dispatch触发action，在reducer中执行，并返回新的state，这个过程是一个同步的操作，
-那么要实现异步就需要中间件（middleware）
-```
+
+>>>
+redux中dispatch触发action，在reducer中执行，并返回新的state，这个过程是一个 **同步** 的操作，  
+那么要实现异步就需要中间件（middleware）  
+>>>
+
 * 中间件的运用就是在`dispath`的时候封装一层其他操纵
 
 ### 中间件的使用
@@ -133,11 +135,54 @@ const store = createStore(
 *上面代码中，applyMiddleware方法的三个参数，就是三个中间件。有的中间件有次序要求，使用前要查一下文档。比如，logger就一定要放在最后，否则输出结果会不正确*
 
 #### redux-thunk
+
 *由于默认的dispatch(action)触发的action只能是一个object对象*
 * redux-thunk 的作用是在`dispatch(action)`时，action可以传递`function`,即`dispatch(function(){})`
 
+Before
+
+```js
+var action = {type:'SOME_ACTION',data:{...}}
+store.dispatch(action) // 传统方式action只能是一个object对象
+
+or
+
+var action = function(params){
+  return {type:'SOME_ACTION',data:params}
+}
+store.dispatch(action())
+```
+
+After
+
+```js
+var action = function(params){
+  return function(dispatch,getState){
+    // 在这里就可以做一些逻辑处理或者异步请求,然后再分发action
+    dispatch({type:'SOME_ACTION',data:params})
+  }
+}
+store.dispatch(action({...})) // 使用redux-thunk后可以触发一个函数
+```
+
 #### redux-promise
-* redux-promise 的作用是可以传递`promise`作为dispatch的参数，即：`dispatch(promise)`
+
+* redux-promise 的作用是可以传递`promise`作为dispatch的参数，即：`dispatch(promise)`  
+
+```js
+function fetchPost() {
+  return dispatch => {
+    dispatch({type:'SOME_ACTION'})
+    return fetch(url)
+      .then(response => response.json())
+      .then(json => dispatch({type:'OTHER_ACTION'}))
+  }
+}
+
+store.dispatch(fetchPost())
+.then(...)
+.catch(...)
+```
 
 ## redux & react
 
@@ -162,5 +207,44 @@ import { connect } from 'react-redux';
 const VisibleTodoList = connect(mapStateToProps,mapDispatchToProps)(TodoList);
 ```
 *TodoList是 UI 组件，VisibleTodoList就是由 React-Redux 通过connect方法自动生成的容器组件*
+
+- 更多详细解释 [react-redux api](http://cn.redux.js.org/docs/react-redux/api.html)  
+
 * mapStateToProps 用于映射state到UI组件的props
+
+> mapStateToProps会订阅 Store，每当state更新的时候，就会自动执行，重新计算 UI 组件的参数，从而触发 UI 组件的重新渲染
+
+>>>
+我们已经知道redux将会为我们维护一个 `全局的 state` ，而这个方法接受一个参数(即全局的state)，并返回我们需要绑定到当前组件props的状态值
+>>>
+
+```js
+const mapStateToProps = (state,ownProps)=>{
+  const {a,b,...other}
+  // 返回我们需要绑定到props的属性
+  return {
+    a,
+    b
+  }
+}
+```
+
+我们就可以通过 `this.props.a` `this.props.b` 获取到绑定的 **state**
+
 * mapDispatchToProps 用于指定UI组件触发事件时将进行怎样的dispatch(action)
+
+这个方法的作用就是将我们之前定义的action绑定到props上，然后我们就可以同上`this.props.someAction` 获取到要dispatch的action  
+
+```js
+import * as action from './action'
+
+const mapDispatchToProps = (dispatch,ownProps)=>{
+  
+  // 返回我们需要绑定到props的action
+  return {
+    someAction:()=>dispatch({type:'SOME_ACTION'})
+  }
+}
+```
+
+**如果你省略这个 mapDispatchToProps 参数，默认情况下，dispatch 会注入到你的组件 props 中**
